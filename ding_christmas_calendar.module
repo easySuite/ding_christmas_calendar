@@ -1,4 +1,4 @@
-      <?php
+<?php
 /**
  * @file
  * Code for the Ding Christmas calendar feature.
@@ -136,7 +136,6 @@ function ding_christmas_calendar_generate_content($quiz_id, $mobile = FALSE) {
 /**
  * Support function for generating content of Christmas calendar.
  *
- *
  * @param string $quiz_id
  *   ID of quiz node.
  * @param string $number
@@ -265,7 +264,7 @@ function ding_christmas_calendar_access_callback($arg, $original) {
   }
   else {
     if (function_exists($original)) {
-      call_user_func($original, $arg);
+      return call_user_func($original, $arg);
     }
   }
 }
@@ -277,7 +276,7 @@ function ding_christmas_calendar_node_access($node, $op, $account) {
   $user = user_load($account->uid);
   $quiz_id = variable_get('ding_christmas_calendar_quiz_id', NULL);
   $obj = menu_get_object();
-  if (!empty($obj) && $obj->nid == $quiz_id && $op == 'view' && in_array('provider', $user->roles)) {
+    if (!empty($obj) && $obj->nid == $quiz_id && $op == 'view' && in_array('provider', $user->roles)) {
     return NODE_ACCESS_DENY;
   }
 }
