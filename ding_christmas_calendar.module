@@ -1,4 +1,4 @@
-<?php
+      <?php
 /**
  * @file
  * Code for the Ding Christmas calendar feature.
@@ -42,6 +42,7 @@ function ding_christmas_calendar_menu() {
     'description' => 'Represents wrapper for quiz_quiztake function.',
     'access arguments' => array('access quiz'),
     'file' => 'ding_christmas_calendar.pages.inc',
+    'delivery callback' => 'ding_christmas_delivery_callback',
   );
   return $items;
 }
@@ -134,6 +135,7 @@ function ding_christmas_calendar_generate_content($quiz_id, $mobile = FALSE) {
 
 /**
  * Support function for generating content of Christmas calendar.
+ *
  *
  * @param string $quiz_id
  *   ID of quiz node.
@@ -234,15 +236,48 @@ function ding_christmas_get_question_id($input) {
 }
 
 /**
- * Implements hook_node_view().
+ * Implements hook_preprocess_HOOK().
  */
-function ding_christmas_calendar_node_view($node, $view_mode, $langcode) {
-  if (in_array($node->type, array('quiz_page', 'multichoice'))) {
-    $path = drupal_get_path('module', 'ding_christmas_calendar');
-    drupal_add_js($path . '/js/slick.js');
-    drupal_add_js($path . '/js/ding_christmas_calendar.js');
-    drupal_add_css($path . '/css/ding_christmas_calendar.css');
-    drupal_add_css($path . '/css/slick.css');
-    drupal_add_css($path . '/css/slick-theme.css');
+function ding_christmas_delivery_callback($page_callback_result) {
+  if ($page_callback_result === MENU_ACCESS_DENIED) {
+    drupal_goto('user/login');
+  }
+  drupal_deliver_html_page($page_callback_result);
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function ding_christmas_calendar_menu_alter(&$items) {
+  $items['node/%quiz_menu/take']['access arguments'][] = $items['node/%quiz_menu/take']['access callback'];
+  $items['node/%quiz_menu/take']['access callback'] = 'ding_christmas_calendar_access_callback';
+  $items['node/%quiz_menu/quiz']['access arguments'][] = $items['node/%quiz_menu/quiz']['access callback'];
+  $items['node/%quiz_menu/quiz']['access callback'] = 'ding_christmas_calendar_access_callback';
+}
+
+/**
+ *  Custom access callback for preventing access to quiz for provider role.
+ */
+function ding_christmas_calendar_access_callback($arg, $original) {
+  global $user;
+  if (in_array('provider', $user->roles)) {
+    return FALSE;
+  }
+  else {
+    if (function_exists($original)) {
+      call_user_func($original, $arg);
+    }
+  }
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function ding_christmas_calendar_node_access($node, $op, $account) {
+  $user = user_load($account->uid);
+  $quiz_id = variable_get('ding_christmas_calendar_quiz_id', NULL);
+  $obj = menu_get_object();
+  if (!empty($obj) && $obj->nid == $quiz_id && $op == 'view' && in_array('provider', $user->roles)) {
+    return NODE_ACCESS_DENY;
   }
 }
